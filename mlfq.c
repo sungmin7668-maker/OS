@@ -22,6 +22,11 @@ typedef struct Queue {
     int time_quantum;
 } Queue;
 
+typedef struct IO{
+    int pid;
+    int remaining_run_time;
+} IO;
+
 // Function to create a new process  from file
 Process* createProcess(int pid, int arrival, int run, int IO_start_time, int IO_run_time) {
     Process* p = (Process*)malloc(sizeof(Process));
@@ -44,6 +49,13 @@ Queue* createQueue(int quantum) {
     Queue* q = (Queue*)malloc(sizeof(Queue));
     q->head = q->tail = NULL;
     q->time_quantum = quantum;
+    return q;
+}
+
+IO* createIO(int pid, int IO_run_time){
+    IO* q=(IO*)malloc(sizeof(IO));
+    q->pid=pid;
+    q->remaining_run_time=IO_run_time;
     return q;
 }
 
@@ -86,6 +98,10 @@ void mlfq_scheduling(Process* processes[], int n) {
     Queue* q2 = createQueue(10);
     Queue* q3 = createQueue(20); // FCFS (no specific quantum, runs until completion or preemption)
 
+    IO* io[]=(IO**)malloc(n*sizeof(IO*));
+    int io_top = 0;
+    int io_tail = 0;
+
     int current_time = 0;
     int completed_processes = 0;
     int i;
@@ -119,7 +135,7 @@ void mlfq_scheduling(Process* processes[], int n) {
 
         // Determine the execution time
         int exec_time;
-        if (current_queue->time_quantum == -1) {
+        if (current_queue->time_quantum == -1) { //굳이 있어야하나?
             // FCFS queue, run until completion
             exec_time = current_process->remaining_run_time;
         } else {
@@ -128,9 +144,27 @@ void mlfq_scheduling(Process* processes[], int n) {
                         current_process->remaining_run_time : current_queue->time_quantum;
         }
 
+        if(current_process->IO_start_time!=0){
+            exec_time=current_process->IO_start_time;
+            io[io_tail]=createIO(current_process->pid, current_process->IO_run_time); // need free
+            io_tail=io_tail+1;
+        }
+
         // Simulate execution
         current_process->remaining_run_time -= exec_time;
         current_time += exec_time;
+        
+        //IO 작동
+        for(int i=io_top;i<io_tail;i++){
+            for(int exec=0;exec<exec_time;exec++){
+                io[i]->remaining_run_time-=1;
+                if(io[i]->remaining_run_time==0){
+                    free(io[i]);
+                    io_top++;
+                }
+            }
+        }
+
 
         // Check if process completed
         if (current_process->remaining_run_time == 0) {
@@ -141,19 +175,25 @@ void mlfq_scheduling(Process* processes[], int n) {
             free(current_process); // Free the memory after completion
         } else {
             // Process not completed, demote to the next queue
-            if (current_queue == q1) {
-                current_process->queue_level = 2;
-                enqueue(q2, current_process);
-            } else if (current_queue == q2) {
-                current_process->queue_level = 3;
-                enqueue(q3, current_process);
-            } else {
-                // Stays in Q3 (FCFS)
-                enqueue(q3, current_process);
+
+            // IO를 들어갔다면 내리면 안돼. 현재큐의 맨뒤로
+            if(current_queue->time_quantum > exec_time) { enqueue(current_queue,current_process); }
+            else{
+                if (current_queue == q1) {
+                    current_process->queue_level = 2;
+                    enqueue(q2, current_process);
+                } else if (current_queue == q2) {
+                    current_process->queue_level = 3;
+                    enqueue(q3, current_process);
+                } else {
+                    // Stays in Q3 (FCFS)
+                    enqueue(q3, current_process);
+                }
             }
         }
     }
 
+    free(io);
     // Print results (this basic simulation prints results as processes finish)
     // A better approach would store completed processes in an array for structured output.
     printf("All processes completed.\n");
