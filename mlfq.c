@@ -68,16 +68,30 @@ Process* dequeue(Queue* q) {
     return p;
 }
 
+int compare_process(const void **a, const void **b){
+    Process* arg1=*(const Process**)a;
+    Process* arg2=*(const Process**)a;
+    if (arg1->arrival_time < arg2->arrival_time) return -1;
+    else if (arg1->arrival_time > arg2->arrival_time) return 1;
+    else {
+        if(arg1->pid < arg2->pid) return -1;
+        else return 1;
+    }
+}
+
 // Main MLFQ simulation function
 void mlfq_scheduling(Process* processes[], int n) {
     // Define the three queues with their time quanta
-    Queue* q1 = createQueue(4);
-    Queue* q2 = createQueue(8);
-    Queue* q3 = createQueue(-1); // FCFS (no specific quantum, runs until completion or preemption)
+    Queue* q1 = createQueue(10);
+    Queue* q2 = createQueue(10);
+    Queue* q3 = createQueue(20); // FCFS (no specific quantum, runs until completion or preemption)
 
     int current_time = 0;
     int completed_processes = 0;
     int i;
+
+    // process sort along arrival_time
+    qsort(processes,n,sizeof(Process*),compare_process);
 
     // Initially add all processes to the highest priority queue (Q1) at their arrival time
     for (i = 0; i < n; i++) {
