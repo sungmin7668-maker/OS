@@ -1,0 +1,6 @@
+current_queue = q1
+current_process = 6
+current_time = 40
+exec_time = 5
+
+

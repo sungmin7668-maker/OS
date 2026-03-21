@@ -154,9 +154,9 @@ void mlfq_scheduling(Process* processes[], int n) {
         current_process->remaining_run_time -= exec_time;
         current_time += exec_time;
         
-        //IO 작동
+        //IO 작동 (1초마다 작동)
         for(int i=io_top;i<io_tail;i++){
-            for(int exec=0;exec<exec_time;exec++){
+            for(int exec=1;exec<=exec_time;exec++){
                 io[i]->remaining_run_time-=1;
                 if(io[i]->remaining_run_time==0){
                     free(io[i]);
