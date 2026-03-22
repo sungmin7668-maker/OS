@@ -1,3 +1,5 @@
+// think about .... : 최소단위가 1초인걸 좀 더 구현해보자 (MEMO 참고)
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -7,8 +9,10 @@ typedef struct Process {
     int arrival_time;
     int run_time;
     int remaining_run_time; 
+    int start_time;
     int completion_time; //실행 끝
     int turnaround_time;
+    int response_time;
     int waiting_time;
     int queue_level;
     int IO_start_time;
@@ -25,6 +29,7 @@ typedef struct Queue {
 typedef struct IO{
     int pid;
     int remaining_run_time;
+    Queue* return_queue;
 } IO;
 
 // Function to create a new process  from file
@@ -34,8 +39,10 @@ Process* createProcess(int pid, int arrival, int run, int IO_start_time, int IO_
     p->arrival_time = arrival;
     p->run_time = run;
     p->remaining_run_time = run;
+    p->start_time = 0;
     p->completion_time = 0;
     p->turnaround_time = 0;
+    p->response_time = 0;
     p->waiting_time = 0;
     p->queue_level = 1; // Start in the highest priority queue
     p->IO_start_time=IO_start_time;
@@ -52,11 +59,12 @@ Queue* createQueue(int quantum) {
     return q;
 }
 
-IO* createIO(int pid, int IO_run_time){
-    IO* q=(IO*)malloc(sizeof(IO));
-    q->pid=pid;
-    q->remaining_run_time=IO_run_time;
-    return q;
+IO* createIO(int pid, int IO_run_time, Queue* return_queue){
+    IO* io=(IO*)malloc(sizeof(IO));
+    io->pid=pid;
+    io->remaining_run_time=IO_run_time;
+    io->return_queue=return_queue;
+    return io;
 }
 
 // Function to add a process to a queue
@@ -92,7 +100,7 @@ int compare_process(const void **a, const void **b){
 }
 
 // Main MLFQ simulation function
-void mlfq_scheduling(Process* processes[], int n) {
+int mlfq_scheduling(Process* processes[], int n) {
     // Define the three queues with their time quanta
     Queue* q1 = createQueue(10);
     Queue* q2 = createQueue(10);
@@ -133,51 +141,82 @@ void mlfq_scheduling(Process* processes[], int n) {
 
         current_process = dequeue(current_queue);
 
+        // process's start time to calculate response time
+        if(current_process->run_time==current_process->remaining_run_time){
+            current_process->start_time=current_time;
+        }
         // Determine the execution time
         int exec_time;
-        if (current_queue->time_quantum == -1) { //굳이 있어야하나?
-            // FCFS queue, run until completion
-            exec_time = current_process->remaining_run_time;
-        } else {
-            // Round Robin queue, run for min of quantum or remaining time
-            exec_time = (current_process->remaining_run_time < current_queue->time_quantum) ?
-                        current_process->remaining_run_time : current_queue->time_quantum;
-        }
-
+        
+        // Round Robin queue, run for min of quantum or remaining time
+        exec_time = (current_process->remaining_run_time < current_queue->time_quantum) ?
+                    current_process->remaining_run_time : current_queue->time_quantum;
+    
         if(current_process->IO_start_time!=0){
             exec_time=current_process->IO_start_time;
-            io[io_tail]=createIO(current_process->pid, current_process->IO_run_time); // need free
-            io_tail=io_tail+1;
+            
+            // same return queue
+            if(current_queue->time_quantum > exec_time)
+                io[io_tail]=createIO(current_process->pid, current_process->IO_run_time, current_queue);
+            // lower
+            else{
+                if(current_queue==q1)
+                    io[io_tail]=createIO(current_process->pid, current_process->IO_run_time,q2);
+                else
+                    io[io_tail]=createIO(current_process->pid, current_process->IO_run_time,q3);
+            }
+            //io_tail=io_tail+1;
         }
 
         // Simulate execution
-        current_process->remaining_run_time -= exec_time;
-        current_time += exec_time;
-        
-        //IO 작동 (1초마다 작동)
-        for(int i=io_top;i<io_tail;i++){
-            for(int exec=1;exec<=exec_time;exec++){
+        for(int exec=1;exec<=exec_time;exec++){
+
+            //IO 작동 (1초마다 작동)
+            for(int i=io_top;i<io_tail;i++){
+
                 io[i]->remaining_run_time-=1;
+
+                // IO end, return to queue
                 if(io[i]->remaining_run_time==0){
+                    for(int j=0;j<n;j++){
+                        if(processes[j]->pid==io[i]->pid){
+                            processes[j]->IO_start_time=0;
+                            enqueue(io[i]->return_queue,processes[j]);
+                            break;
+                        }
+                    }
                     free(io[i]);
                     io_top++;
                 }
             }
+
+            current_process->remaining_run_time -= 1;
+            current_time += 1;
+            //boost
+            if((current_time%50)==0){
+            while(q2->tail!=NULL)
+                enqueue(q1,dequeue(q2));
+            while(q3->tail!=NULL)
+                enqueue(q1,dequeue(q3));
+            }
         }
 
+        if(current_process->IO_start_time!=0){ // current process 가 exec 만큼 실행되고 나서 현재 IO가 실행되도록
+            io_tail=io_tail+1;
+        }
 
         // Check if process completed
         if (current_process->remaining_run_time == 0) {
             current_process->completion_time = current_time;
             current_process->turnaround_time = current_process->completion_time - current_process->arrival_time;
             current_process->waiting_time = current_process->turnaround_time - current_process->run_time;
+            current_process->response_time = current_process->start_time - current_process->arrival_time;
             completed_processes++;
             free(current_process); // Free the memory after completion
         } else {
             // Process not completed, demote to the next queue
 
-            // IO를 들어갔다면 내리면 안돼. 현재큐의 맨뒤로
-            if(current_queue->time_quantum > exec_time) { enqueue(current_queue,current_process); }
+            if(current_process->IO_start_time!=0) continue;
             else{
                 if (current_queue == q1) {
                     current_process->queue_level = 2;
@@ -190,13 +229,16 @@ void mlfq_scheduling(Process* processes[], int n) {
                     enqueue(q3, current_process);
                 }
             }
+            
         }
     }
-
+    free(q1);free(q2);free(q3);
     free(io);
     // Print results (this basic simulation prints results as processes finish)
     // A better approach would store completed processes in an array for structured output.
     printf("All processes completed.\n");
+
+    return current_time;
 }
 
 int main() {
@@ -217,9 +259,15 @@ int main() {
 
     fclose(fp);
 
-    mlfq_scheduling(processes, n);
+    int final_completion_time = mlfq_scheduling(processes, n);
 
     // print 
+    printf("PID | Turnaround time | response time\n");
+    for (int p=0;p<n;p++){
+        printf("%-3d | %-15d | %-13d\n",processes[p]->pid,processes[p]->turnaround_time,processes[p]->response_time);
+    }
+
+    printf("final_completion_time : %d\n",final_completion_time);
 
     // Note: A real implementation for comprehensive results (Avg Turnaround/Waiting Time)
     // needs a list of completed processes for final calculation.
