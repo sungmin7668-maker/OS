@@ -99,6 +99,14 @@ int compare_process(const void *a, const void *b){ // const : 값들을 변경�
     }
 }
 
+int compare_process_ForPrint(const void *a, const void *b){ // const : 값들을 변경하지 못하도록
+    Process* arg1=*(Process* const*)a;
+    Process* arg2=*(Process* const*)b;
+    
+    if(arg1->pid < arg2->pid) return -1;
+    else return 1;
+}
+
 // Main MLFQ simulation function
 int mlfq_scheduling(Process* processes[], int n) {
     // Define the three queues with their time quanta
@@ -258,6 +266,8 @@ int main() {
 
     int final_completion_time = mlfq_scheduling(processes, n);
     
+    qsort(processes,n,sizeof(Process*),compare_process_ForPrint);
+
     // print 
     printf("PID | Turnaround time | response time\n");
     for (int p=0;p<n;p++){
