@@ -121,7 +121,7 @@ int mlfq_scheduling(Process* processes[], int n) {
     for (i = 0; i < n; i++) {
         enqueue(q1, processes[i]);
     }
-
+    
     while (completed_processes < n) {
         Process* current_process = NULL;
         Queue* current_queue = NULL;
@@ -251,12 +251,10 @@ int main() {
     int PID,arrival_time,run_time,IO_start_time,IO_run_time;
     int n=0;
     Process* processes[100]; //프로세스 최대 100개
-    
-    while(fscanf(fp,"%d %d %d %d %d",&PID,&arrival_time,&run_time,&IO_start_time,&IO_run_time)){
+    while(fscanf(fp,"%d %d %d %d %d",&PID,&arrival_time,&run_time,&IO_start_time,&IO_run_time)==5){
         processes[n]=createProcess(PID, arrival_time, run_time, IO_start_time, IO_run_time);
         n=n+1;
     }
-
     fclose(fp);
 
     int final_completion_time = mlfq_scheduling(processes, n);
