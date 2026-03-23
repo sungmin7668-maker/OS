@@ -252,7 +252,7 @@ int main() {
     int n=0;
     Process* processes[100]; //프로세스 최대 100개
     
-    while(fscanf("%d %d %d %d %d",&PID,&arrival_time,&run_time,&IO_start_time,&IO_run_time)){
+    while(fscanf(fp,"%d %d %d %d %d",&PID,&arrival_time,&run_time,&IO_start_time,&IO_run_time)){
         processes[n]=createProcess(PID, arrival_time, run_time, IO_start_time, IO_run_time);
         n=n+1;
     }
