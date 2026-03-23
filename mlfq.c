@@ -269,11 +269,12 @@ int main() {
     qsort(processes,n,sizeof(Process*),compare_process_ForPrint);
 
     // print 
+    printf("-------------------------------------\n");
     printf("PID | Turnaround time | response time\n");
     for (int p=0;p<n;p++){
         printf("%-3d | %-15d | %-13d\n",processes[p]->pid,processes[p]->turnaround_time,processes[p]->response_time);
     }
-
+    printf("-------------------------------------\n");
     printf("final_completion_time : %d\n",final_completion_time);
     
     for(int p=0;p<n;p++){
