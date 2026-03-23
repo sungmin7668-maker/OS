@@ -106,7 +106,7 @@ int mlfq_scheduling(Process* processes[], int n) {
     Queue* q2 = createQueue(10);
     Queue* q3 = createQueue(20); // FCFS (no specific quantum, runs until completion or preemption)
 
-    IO* io[]=(IO**)malloc(n*sizeof(IO*));
+    IO** io=(IO**)malloc(n*sizeof(IO*)); // 'IO* io[]=(IO**)~~~' is wrong?
     int io_top = 0;
     int io_tail = 0;
 

@@ -1,6 +1,6 @@
 current_queue = q1
-current_process = 6
-current_time = 105
+current_process = 7
+current_time = 195
 exec_time = 10
 
 
@@ -8,7 +8,7 @@ boost와 io에서 돌아오는게 동시일때는 io먼저 수행
 
 boost와 cpu를 다 끝낸 process 가 동시일 때는 boost 먼저
 
-q가 변화되는 상황에서 'io 복귀 > boost > cpu 복귀'    순
+queue가 변화되는 상황에서 'io 복귀 > boost > cpu 복귀' 순
 
 
 
