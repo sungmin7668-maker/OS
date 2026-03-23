@@ -88,9 +88,9 @@ Process* dequeue(Queue* q) {
     return p;
 }
 
-int compare_process(const void **a, const void **b){
-    Process* arg1=*(const Process**)a;
-    Process* arg2=*(const Process**)a;
+int compare_process(const void *a, const void *b){ // const : 값들을 변경하지 못하도록
+    Process* arg1=*(Process* const*)a;
+    Process* arg2=*(Process* const*)b;
     if (arg1->arrival_time < arg2->arrival_time) return -1;
     else if (arg1->arrival_time > arg2->arrival_time) return 1;
     else {
