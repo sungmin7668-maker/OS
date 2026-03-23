@@ -212,7 +212,6 @@ int mlfq_scheduling(Process* processes[], int n) {
             current_process->waiting_time = current_process->turnaround_time - current_process->run_time;
             current_process->response_time = current_process->start_time - current_process->arrival_time;
             completed_processes++;
-            free(current_process); // Free the memory after completion
         } else {
             // Process not completed, demote to the next queue
 
@@ -258,7 +257,7 @@ int main() {
     fclose(fp);
 
     int final_completion_time = mlfq_scheduling(processes, n);
-
+    
     // print 
     printf("PID | Turnaround time | response time\n");
     for (int p=0;p<n;p++){
@@ -266,7 +265,10 @@ int main() {
     }
 
     printf("final_completion_time : %d\n",final_completion_time);
-
+    
+    for(int p=0;p<n;p++){
+        free(processes[p]);
+    }
     // Note: A real implementation for comprehensive results (Avg Turnaround/Waiting Time)
     // needs a list of completed processes for final calculation.
 
