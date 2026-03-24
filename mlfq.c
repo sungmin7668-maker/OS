@@ -100,7 +100,7 @@ int compare_process(const void *a, const void *b){
 }
 
 // pid 기준 오름차순 정렬
-int compare_process_ForPrint(const void *a, const void *b){ // const : 값들을 변경하지 못하도록
+int compare_process_ForPrint(const void *a, const void *b){ 
     Process* arg1=*(Process* const*)a;
     Process* arg2=*(Process* const*)b;
     
@@ -113,17 +113,17 @@ int mlfq_scheduling(Process* processes[], int n) {
     // Define the three queues with their time quanta
     Queue* q1 = createQueue(10);
     Queue* q2 = createQueue(10);
-    Queue* q3 = createQueue(20); // FCFS (no specific quantum, runs until completion or preemption)
+    Queue* q3 = createQueue(20); 
 
-    IO** io=(IO**)malloc(n*sizeof(IO*)); // 'IO* io[]=(IO**)~~~' is wrong?
-    int io_top = 0;
+    IO** io=(IO**)malloc(n*sizeof(IO*)); //실행 중인 io 작업들
+    int io_top = 0; 
     int io_tail = 0;
 
     int current_time = 0;
     int completed_processes = 0;
     int i;
 
-    // process sort along arrival_time
+    // arrival_time 순으로 큐에 들어가도록 정렬
     qsort(processes,n,sizeof(Process*),compare_process);
 
     // Initially add all processes to the highest priority queue (Q1) at their arrival time
@@ -160,7 +160,8 @@ int mlfq_scheduling(Process* processes[], int n) {
         // Round Robin queue, run for min of quantum or remaining time
         exec_time = (current_process->remaining_run_time < current_queue->time_quantum) ?
                     current_process->remaining_run_time : current_queue->time_quantum;
-    
+        
+        //IO 작업이 있다면, exec_time 수정
         if(current_process->IO_start_time!=0){
             exec_time=current_process->IO_start_time;
             
@@ -174,13 +175,11 @@ int mlfq_scheduling(Process* processes[], int n) {
                 else
                     io[io_tail]=createIO(current_process->pid, current_process->IO_run_time,q3);
             }
-            //io_tail=io_tail+1;
         }
 
-        // Simulate execution
+        // Simulate execution ('시간 최소단위 1초' 구현)
         for(int exec=1;exec<=exec_time;exec++){
 
-            //IO 작동 (1초마다 작동)
             for(int i=io_top;i<io_tail;i++){
 
                 io[i]->remaining_run_time-=1;
@@ -189,7 +188,7 @@ int mlfq_scheduling(Process* processes[], int n) {
                 if(io[i]->remaining_run_time==0){
                     for(int j=0;j<n;j++){
                         if(processes[j]->pid==io[i]->pid){
-                            processes[j]->IO_start_time=0;
+                            processes[j]->IO_start_time=0; // createIO 를 다시 하지 않도록
                             enqueue(io[i]->return_queue,processes[j]);
                             break;
                         }
@@ -221,9 +220,8 @@ int mlfq_scheduling(Process* processes[], int n) {
             current_process->response_time = current_process->start_time - current_process->arrival_time;
             completed_processes++;
         } else {
-            // Process not completed, demote to the next queue
-
-            if(current_process->IO_start_time!=0) continue;
+            // IO 로 들어갔다면, IO 작업이 끝나고 큐에 복귀하도록
+            if(current_process->IO_start_time!=0) continue; 
             else{
                 if (current_queue == q1) {
                     current_process->queue_level = 2;
@@ -232,7 +230,6 @@ int mlfq_scheduling(Process* processes[], int n) {
                     current_process->queue_level = 3;
                     enqueue(q3, current_process);
                 } else {
-                    // Stays in Q3 (FCFS)
                     enqueue(q3, current_process);
                 }
             }
@@ -256,7 +253,7 @@ int main() {
     }
     
     int PID,arrival_time,run_time,IO_start_time,IO_run_time;
-    int n=0;
+    int n=0; // 프로세스 개수
     Process* processes[100]; //프로세스 최대 100개
     while(fscanf(fp,"%d %d %d %d %d",&PID,&arrival_time,&run_time,&IO_start_time,&IO_run_time)==5){
         processes[n]=createProcess(PID, arrival_time, run_time, IO_start_time, IO_run_time);
@@ -266,6 +263,7 @@ int main() {
 
     int final_completion_time = mlfq_scheduling(processes, n);
     
+    // 출력이 pid 순으로 되도록 정렬
     qsort(processes,n,sizeof(Process*),compare_process_ForPrint);
 
     // print 
