@@ -1,4 +1,4 @@
-// think about .... : 최소단위가 1초인걸 좀 더 구현해보자 (MEMO 참고)
+// TODO : 최소단위가 1초인걸 좀 더 구현해보자 (MEMO 참고)
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,13 +7,13 @@
 typedef struct Process {
     int pid;
     int arrival_time;
-    int run_time;
+    int run_time; // Fix : burst -> run
     int remaining_run_time; 
-    int start_time;
-    int completion_time; //실행 끝
-    int turnaround_time;
-    int response_time;
-    int waiting_time;
+    int start_time; 
+    int completion_time; 
+    int turnaround_time; // completion time - arrival_time
+    int response_time; // start time - arrival_time
+    // Remove : waiting_time
     int queue_level;
     int IO_start_time;
     int IO_run_time;
@@ -43,7 +43,6 @@ Process* createProcess(int pid, int arrival, int run, int IO_start_time, int IO_
     p->completion_time = 0;
     p->turnaround_time = 0;
     p->response_time = 0;
-    p->waiting_time = 0;
     p->queue_level = 1; // Start in the highest priority queue
     p->IO_start_time=IO_start_time;
     p->IO_run_time=IO_run_time;
@@ -57,14 +56,6 @@ Queue* createQueue(int quantum) {
     q->head = q->tail = NULL;
     q->time_quantum = quantum;
     return q;
-}
-
-IO* createIO(int pid, int IO_run_time, Queue* return_queue){
-    IO* io=(IO*)malloc(sizeof(IO));
-    io->pid=pid;
-    io->remaining_run_time=IO_run_time;
-    io->return_queue=return_queue;
-    return io;
 }
 
 // Function to add a process to a queue
@@ -88,7 +79,16 @@ Process* dequeue(Queue* q) {
     return p;
 }
 
-int compare_process(const void *a, const void *b){ // const : 값들을 변경하지 못하도록
+IO* createIO(int pid, int IO_run_time, Queue* return_queue){
+    IO* io=(IO*)malloc(sizeof(IO));
+    io->pid=pid;
+    io->remaining_run_time=IO_run_time;
+    io->return_queue=return_queue;
+    return io;
+}
+
+// arrival_time 기준 오름차순 정렬 (같으면 PID 순)
+int compare_process(const void *a, const void *b){ 
     Process* arg1=*(Process* const*)a;
     Process* arg2=*(Process* const*)b;
     if (arg1->arrival_time < arg2->arrival_time) return -1;
@@ -99,6 +99,7 @@ int compare_process(const void *a, const void *b){ // const : 값들을 변경�
     }
 }
 
+// pid 기준 오름차순 정렬
 int compare_process_ForPrint(const void *a, const void *b){ // const : 값들을 변경하지 못하도록
     Process* arg1=*(Process* const*)a;
     Process* arg2=*(Process* const*)b;
@@ -217,7 +218,6 @@ int mlfq_scheduling(Process* processes[], int n) {
         if (current_process->remaining_run_time == 0) {
             current_process->completion_time = current_time;
             current_process->turnaround_time = current_process->completion_time - current_process->arrival_time;
-            current_process->waiting_time = current_process->turnaround_time - current_process->run_time;
             current_process->response_time = current_process->start_time - current_process->arrival_time;
             completed_processes++;
         } else {
