@@ -127,6 +127,7 @@ final_completion_time : 365
 | ![git_pull_rebase](./images/git_pull_rebase.png) |
 | git push origin main | 로컬 커밋을 원격 저장소의 main 브랜치에 업로드 |
 | git push origin main --force | 로컬 상태를 원격에 강제로 덮어씌우기 **(협업 시 주의)** |
+| git checkout -- . | 커밋되지 않은 로컬 변경사항 삭제 |
 
 ### 2. C언어 로직
 
