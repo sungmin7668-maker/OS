@@ -113,7 +113,7 @@ final_completion_time : 365
 ```
 ## 배운점
 
-### 1. GIT, GITHUB 사용법
+### 1. Git / GitHub 사용법
 
 | 명령어 | 설명 |
 |-----|-----|
@@ -129,9 +129,9 @@ final_completion_time : 365
 | git push origin main --force | 로컬 상태를 원격에 강제로 덮어씌우기 **(협업 시 주의)** |
 | git checkout -- . | 커밋되지 않은 로컬 변경사항 삭제 |
 
-### 2. C언어 로직
+### 2. C언어
 
-- ### ***qsort***
+#### 2-1. 포인터 배열의 qsort
 
 **일반 배열의 qsort**
 
@@ -169,9 +169,7 @@ int compare(const void *a, const void *b){
 | 캐스팅 | `*(int*)a` | `*(Process* const*)a` |
 | sizeof 인자 | `sizeof(int)` | `sizeof(Process*)` |
 
----
-
-- ### ***fscanf***
+#### 2-2. fscanf
 
 `scanf`가 키보드에서 입력받는 것이라면, `fscanf`는 파일에서 입력받는 함수이다.
 ```c
@@ -191,6 +189,4 @@ fclose(fp);
 - `%d` 같은 형식 지정자가 공백과 줄바꿈을 자동으로 건너뛰므로, 각 줄에 데이터가 있어도 별도 처리 없이 읽어온다.
 - 파일을 다 읽으면 `EOF`(-1)를 반환하여 while 루프가 종료된다.
 
-### 3. 이 외의 것
-
-- ### ***Segmentation Fault(Core dumped)***
+#### 2-3. Segmentation Fault (Core dumped)
