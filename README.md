@@ -108,21 +108,88 @@ final_completion_time : 365
 ├── mlfq             # 실행파일
 ├── trace1.txt       # 테스트 입력 파일
 ├── MEMO.txt         # 참고용
-└── 
+└── images           # 첨부 이미지 폴더
+    └── git_pull_rebase.png
 ```
 ## 배운점
 
-### GIT, GITHUB 사용법
+### 1. GIT, GITHUB 사용법
 
-- **git init** : 현재 디렉토리를 Git 저장소로 초기화 / **처음에 꼭 해야됨**
-- **git add .**: 모든 변경된 파일을 스테이징 영역에 추가
-- **git commit -m "~~"**: 스테이징된 변경사항을 커밋 메시지와 함께 저장 / **커밋 메시지는 동사로 시작 (Add, Remove, Fix 등)**
-- **git branch -m master main**: 현재 브랜치 이름을 master에서 main으로 변경 / **초기 브랜치가 master여서 변경필요**
-- **git remote add origin "(레포지토리주소)"**: 원격 저장소를 origin이라는 이름으로 연결
-- **git remote -v**: 연결된 원격 저장소 주소 확인
-- **git pull origin main --rebase**: 원격의 변경사항을 가져와서 로컬 커밋 위에 재배치
-![git_pull_rebase]./images/git_pull_rebase.png
-- **git push origin main**: 로컬 커밋을 원격 저장소의 main 브랜치에 업로드
-- **git push origin main --force**: 로컬 상태를 원격에 강제로 덮어씌우기 **(협업 시 주의)**
+| 명령어 | 설명 |
+|-----|-----|
+| git init | 현재 디렉토리를 Git 저장소로 초기화 / **처음에 꼭 해야됨** |
+| git add . | 모든 변경된 파일을 스테이징 영역에 추가 |
+| git commit -m "~~" | 스테이징된 변경사항을 커밋 메시지와 함께 저장 / **커밋 메시지는 동사로 시작 (Add, Remove, Fix 등)** |
+| git branch -m master main | 현재 브랜치 이름을 master에서 main으로 변경 / **초기 브랜치가 master여서 변경필요** |
+| git remote add origin "(레포지토리주소)" | 원격 저장소를 origin이라는 이름으로 연결 |
+| git remote -v | 연결된 원격 저장소 주소 확인 |
+| git pull origin main --rebase | 원격의 변경사항을 가져와서 로컬 커밋 위에 재배치 |
+| ![git_pull_rebase](./images/git_pull_rebase.png) |
+| git push origin main | 로컬 커밋을 원격 저장소의 main 브랜치에 업로드 |
+| git push origin main --force | 로컬 상태를 원격에 강제로 덮어씌우기 **(협업 시 주의)** |
 
-### C언어 로직
+### 2. C언어 로직
+
+- ### ***qsort***
+
+**일반 배열의 qsort**
+
+일반 배열에서는 `qsort`가 비교 함수에 원소의 주소를 넘겨준다. 역참조 한 번으로 값을 꺼낼 수 있다.
+```c
+int arr[] = {3, 1, 2};
+qsort(arr, 3, sizeof(int), compare);
+
+int compare(const void *a, const void *b){
+    int arg1 = *(int*)a;       // &arr[i] → 역참조 → int 값
+    int arg2 = *(int*)b;
+    return arg1 - arg2;
+}
+```
+
+**포인터 배열의 qsort**
+
+포인터 배열도 동일하게 원소의 주소를 넘기지만, 원소 자체가 포인터이므로 포인터의 주소(이중 포인터)가 넘어온다. 따라서 역참조를 한 번 더 해야 한다.
+```c
+Process* processes[] = {p1, p2, p3};
+qsort(processes, 3, sizeof(Process*), compare);  // sizeof(Process*)인 점에 주의
+
+int compare(const void *a, const void *b){
+    Process* arg1 = *(Process* const*)a;   // &processes[i] → 역참조 → Process* 포인터
+    Process* arg2 = *(Process* const*)b;
+    return arg1->arrival_time - arg2->arrival_time;
+}
+```
+
+**핵심 차이 요약**
+
+| | 일반 배열 | 포인터 배열 |
+|---|---|---|
+| 비교 함수에 넘어오는 것 | 원소의 주소 | 포인터의 주소 (이중 포인터) |
+| 캐스팅 | `*(int*)a` | `*(Process* const*)a` |
+| sizeof 인자 | `sizeof(int)` | `sizeof(Process*)` |
+
+---
+
+- ### ***fscanf***
+
+`scanf`가 키보드에서 입력받는 것이라면, `fscanf`는 파일에서 입력받는 함수이다.
+```c
+FILE *fp = fopen("trace1.txt", "r");
+
+int pid, arrival, run, io_start, io_run;
+while (fscanf(fp, "%d %d %d %d %d", &pid, &arrival, &run, &io_start, &io_run) == 5) {
+    // 읽어온 데이터 사용
+}
+
+fclose(fp);
+```
+
+**핵심 포인트**
+
+- 반환값은 **성공적으로 읽은 항목 수**이다. 위 예시에서는 5개를 읽으므로 `== 5`로 비교하면 파일 끝이나 읽기 실패를 자연스럽게 감지할 수 있다.
+- `%d` 같은 형식 지정자가 공백과 줄바꿈을 자동으로 건너뛰므로, 각 줄에 데이터가 있어도 별도 처리 없이 읽어온다.
+- 파일을 다 읽으면 `EOF`(-1)를 반환하여 while 루프가 종료된다.
+
+### 3. 이 외의 것
+
+- ### ***Segmentation Fault(Core dumped)***
