@@ -128,6 +128,9 @@ final_completion_time : 365
 | git push origin main | 로컬 커밋을 원격 저장소의 main 브랜치에 업로드 |
 | git push origin main --force | 로컬 상태를 원격에 강제로 덮어씌우기 **(협업 시 주의)** |
 | git checkout -- . | 커밋되지 않은 로컬 변경사항 삭제 |
+| git checkout -b develop | develop 브랜치 생성 후 이동 |
+| git checkout master | master 브랜치로 이동 |
+
 
 ### 2. C언어
 
